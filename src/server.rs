@@ -6,6 +6,7 @@ use threadpool::ThreadPool;
 use std::collections::HashMap;
 use std::{rc::Rc};
 use std::borrow::Borrow;
+use std::fs;
 
 type RouteFuncToBeExec = Rc<dyn Fn() + 'static>;
 
@@ -68,7 +69,16 @@ impl Area_Divison_Server {
                 if let Some(func) = self.get_route_map.get(path[1]) {
                     func()
                 } else {
-                    println!("Nothing found!");
+                    let status_line = "HTTP/1.1 404 NOT FOUND\r\n";
+                    let contents = fs::read_to_string("404.html").unwrap();
+                    let response = format!(
+                        "{}\r\nContent-Length: {}\r\n\r\n{}",
+                        status_line,
+                        contents.len(),
+                        contents
+                    );
+                    stream_req.write(response.as_bytes()).unwrap();
+                    stream_req.flush().unwrap();
                 }
             } else if request.to_ascii_lowercase().contains("put") {
                 println!("Recieved a put request");

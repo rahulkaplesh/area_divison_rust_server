@@ -67,25 +67,51 @@ impl Area_Divison_Server {
                 let path: Vec<&str> = header.split(' ').collect();
                 println!("{}", path[1]);
                 if let Some(func) = self.get_route_map.get(path[1]) {
-                    func()
+                    func();
                 } else {
-                    let status_line = "HTTP/1.1 404 NOT FOUND\r\n";
-                    let contents = fs::read_to_string("404.html").unwrap();
-                    let response = format!(
-                        "{}\r\nContent-Length: {}\r\n\r\n{}",
-                        status_line,
-                        contents.len(),
-                        contents
-                    );
+                    let response = self.send_404_response();
                     stream_req.write(response.as_bytes()).unwrap();
                     stream_req.flush().unwrap();
                 }
             } else if request.to_ascii_lowercase().contains("put") {
                 println!("Recieved a put request");
+                let request_vec: Vec<&str> = request.split('\n').collect();
+                let header = request_vec[0].to_string();
+                let path: Vec<&str> = header.split(' ').collect();
+                println!("{}", path[1]);
+                if let Some(func) = self.put_route_map.get(path[1]) {
+                    func();
+                } else {
+                    let response = self.send_404_response();
+                    stream_req.write(response.as_bytes()).unwrap();
+                    stream_req.flush().unwrap();
+                }
             } else if request.to_ascii_lowercase().contains("post") {
                 println!("Recieved a post request");
+                let request_vec: Vec<&str> = request.split('\n').collect();
+                let header = request_vec[0].to_string();
+                let path: Vec<&str> = header.split(' ').collect();
+                println!("{}", path[1]);
+                if let Some(func) = self.post_route_map.get(path[1]) {
+                    func();
+                } else {
+                    let response = self.send_404_response();
+                    stream_req.write(response.as_bytes()).unwrap();
+                    stream_req.flush().unwrap();
+                }
             }
         }
+    }
+
+    fn send_404_response(&self) -> String {
+        let status_line = "HTTP/1.1 404 NOT FOUND\r\n";
+        let contents = fs::read_to_string("404.html").unwrap();
+        format!(
+            "{}\r\nContent-Length: {}\r\n{}",
+            status_line,
+            contents.len(),
+            contents
+        )
     }
 
 }
